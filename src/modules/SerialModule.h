@@ -9,7 +9,7 @@
 #include <functional>
 
 #if (defined(ARCH_ESP32) || defined(ARCH_NRF52) || defined(ARCH_RP2040) || defined(ARCH_STM32WL)) &&                             \
-    !defined(CONFIG_IDF_TARGET_ESP32S2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+  !defined(CONFIG_IDF_TARGET_ESP32S2)
 
 class SerialModule : public StreamAPI, private concurrency::OSThread
 {
