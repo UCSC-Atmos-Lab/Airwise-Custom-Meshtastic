@@ -35,6 +35,18 @@ typedef struct _airwise_OzoneReading {
     float board_temperature_c;
 } airwise_OzoneReading;
 
+/* DFRobot MH-Z9041A (SEN0654). Concentration is percent of the lower
+ explosive limit (%LEL), not ppm or volume percent. Failed reads are absent. */
+typedef struct _airwise_MethaneReading {
+    bool has_concentration_percent_lel;
+    float concentration_percent_lel;
+    bool has_temperature_c;
+    float temperature_c;
+    /* Raw device fault byte; zero means normal. May be present without readings. */
+    bool has_fault_code;
+    uint32_t fault_code;
+} airwise_MethaneReading;
+
 /* ACK-MISS describes application receipt, not a durable storage commit.
  Consumers must require contig and highest_seen, with contig <= highest_seen.
  Each distinct miss must be greater than contig and at most highest_seen. */
@@ -151,6 +163,8 @@ typedef struct _airwise_Data {
     airwise_SamplePosition position;
     bool has_ozone;
     airwise_OzoneReading ozone;
+    bool has_methane;
+    airwise_MethaneReading methane;
 } airwise_Data;
 
 /* Serialize one Frame in a Meshtastic PRIVATE_APP payload. Consumers must
@@ -184,8 +198,9 @@ extern "C" {
 /* Initializer values for message structs */
 #define airwise_Frame_init_default               {false, 0, false, 0, false, 0, false, 0, 0, {airwise_Hello_init_default}}
 #define airwise_Hello_init_default               {false, 0, false, 0, false, 0, false, 0}
-#define airwise_Data_init_default                {false, 0, false, 0, false, 0, false, 0, false, 0, false, airwise_Ina3221Power_init_default, false, airwise_Bme680Reading_init_default, false, airwise_Scd41Reading_init_default, false, airwise_Sht40Reading_init_default, false, airwise_Bmv080Reading_init_default, false, airwise_SamplePosition_init_default, false, airwise_OzoneReading_init_default}
+#define airwise_Data_init_default                {false, 0, false, 0, false, 0, false, 0, false, 0, false, airwise_Ina3221Power_init_default, false, airwise_Bme680Reading_init_default, false, airwise_Scd41Reading_init_default, false, airwise_Sht40Reading_init_default, false, airwise_Bmv080Reading_init_default, false, airwise_SamplePosition_init_default, false, airwise_OzoneReading_init_default, false, airwise_MethaneReading_init_default}
 #define airwise_OzoneReading_init_default        {false, 0, false, 0, false, 0}
+#define airwise_MethaneReading_init_default      {false, 0, false, 0, false, 0}
 #define airwise_Ack_init_default                 {false, 0, false, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 #define airwise_Ina3221Power_init_default        {false, airwise_PowerChannel_init_default, false, airwise_PowerChannel_init_default, false, airwise_PowerChannel_init_default}
 #define airwise_PowerChannel_init_default        {false, 0, false, 0}
@@ -196,8 +211,9 @@ extern "C" {
 #define airwise_SamplePosition_init_default      {false, 0, false, 0, false, 0, false, 0, false, 0}
 #define airwise_Frame_init_zero                  {false, 0, false, 0, false, 0, false, 0, 0, {airwise_Hello_init_zero}}
 #define airwise_Hello_init_zero                  {false, 0, false, 0, false, 0, false, 0}
-#define airwise_Data_init_zero                   {false, 0, false, 0, false, 0, false, 0, false, 0, false, airwise_Ina3221Power_init_zero, false, airwise_Bme680Reading_init_zero, false, airwise_Scd41Reading_init_zero, false, airwise_Sht40Reading_init_zero, false, airwise_Bmv080Reading_init_zero, false, airwise_SamplePosition_init_zero, false, airwise_OzoneReading_init_zero}
+#define airwise_Data_init_zero                   {false, 0, false, 0, false, 0, false, 0, false, 0, false, airwise_Ina3221Power_init_zero, false, airwise_Bme680Reading_init_zero, false, airwise_Scd41Reading_init_zero, false, airwise_Sht40Reading_init_zero, false, airwise_Bmv080Reading_init_zero, false, airwise_SamplePosition_init_zero, false, airwise_OzoneReading_init_zero, false, airwise_MethaneReading_init_zero}
 #define airwise_OzoneReading_init_zero           {false, 0, false, 0, false, 0}
+#define airwise_MethaneReading_init_zero         {false, 0, false, 0, false, 0}
 #define airwise_Ack_init_zero                    {false, 0, false, 0, 0, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}
 #define airwise_Ina3221Power_init_zero           {false, airwise_PowerChannel_init_zero, false, airwise_PowerChannel_init_zero, false, airwise_PowerChannel_init_zero}
 #define airwise_PowerChannel_init_zero           {false, 0, false, 0}
@@ -215,6 +231,9 @@ extern "C" {
 #define airwise_OzoneReading_concentration_ppm_tag 1
 #define airwise_OzoneReading_probe_voltage_v_tag 2
 #define airwise_OzoneReading_board_temperature_c_tag 3
+#define airwise_MethaneReading_concentration_percent_lel_tag 1
+#define airwise_MethaneReading_temperature_c_tag 2
+#define airwise_MethaneReading_fault_code_tag    3
 #define airwise_Ack_contig_tag                   1
 #define airwise_Ack_highest_seen_tag             2
 #define airwise_Ack_miss_tag                     3
@@ -253,6 +272,7 @@ extern "C" {
 #define airwise_Data_bmv080_tag                  14
 #define airwise_Data_position_tag                15
 #define airwise_Data_ozone_tag                   16
+#define airwise_Data_methane_tag                 17
 #define airwise_Frame_app_id_tag                 1
 #define airwise_Frame_schema_version_tag         2
 #define airwise_Frame_node_id_tag                3
@@ -296,7 +316,8 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  scd41,            12) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  sht40,            13) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  bmv080,           14) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  position,         15) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  ozone,            16)
+X(a, STATIC,   OPTIONAL, MESSAGE,  ozone,            16) \
+X(a, STATIC,   OPTIONAL, MESSAGE,  methane,          17)
 #define airwise_Data_CALLBACK NULL
 #define airwise_Data_DEFAULT NULL
 #define airwise_Data_ina3221_MSGTYPE airwise_Ina3221Power
@@ -306,6 +327,7 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  ozone,            16)
 #define airwise_Data_bmv080_MSGTYPE airwise_Bmv080Reading
 #define airwise_Data_position_MSGTYPE airwise_SamplePosition
 #define airwise_Data_ozone_MSGTYPE airwise_OzoneReading
+#define airwise_Data_methane_MSGTYPE airwise_MethaneReading
 
 #define airwise_OzoneReading_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, FLOAT,    concentration_ppm,   1) \
@@ -313,6 +335,13 @@ X(a, STATIC,   OPTIONAL, FLOAT,    probe_voltage_v,   2) \
 X(a, STATIC,   OPTIONAL, FLOAT,    board_temperature_c,   3)
 #define airwise_OzoneReading_CALLBACK NULL
 #define airwise_OzoneReading_DEFAULT NULL
+
+#define airwise_MethaneReading_FIELDLIST(X, a) \
+X(a, STATIC,   OPTIONAL, FLOAT,    concentration_percent_lel,   1) \
+X(a, STATIC,   OPTIONAL, FLOAT,    temperature_c,     2) \
+X(a, STATIC,   OPTIONAL, UINT32,   fault_code,        3)
+#define airwise_MethaneReading_CALLBACK NULL
+#define airwise_MethaneReading_DEFAULT NULL
 
 #define airwise_Ack_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, UINT32,   contig,            1) \
@@ -379,6 +408,7 @@ extern const pb_msgdesc_t airwise_Frame_msg;
 extern const pb_msgdesc_t airwise_Hello_msg;
 extern const pb_msgdesc_t airwise_Data_msg;
 extern const pb_msgdesc_t airwise_OzoneReading_msg;
+extern const pb_msgdesc_t airwise_MethaneReading_msg;
 extern const pb_msgdesc_t airwise_Ack_msg;
 extern const pb_msgdesc_t airwise_Ina3221Power_msg;
 extern const pb_msgdesc_t airwise_PowerChannel_msg;
@@ -393,6 +423,7 @@ extern const pb_msgdesc_t airwise_SamplePosition_msg;
 #define airwise_Hello_fields &airwise_Hello_msg
 #define airwise_Data_fields &airwise_Data_msg
 #define airwise_OzoneReading_fields &airwise_OzoneReading_msg
+#define airwise_MethaneReading_fields &airwise_MethaneReading_msg
 #define airwise_Ack_fields &airwise_Ack_msg
 #define airwise_Ina3221Power_fields &airwise_Ina3221Power_msg
 #define airwise_PowerChannel_fields &airwise_PowerChannel_msg
@@ -407,10 +438,11 @@ extern const pb_msgdesc_t airwise_SamplePosition_msg;
 #define airwise_Ack_size                         108
 #define airwise_Bme680Reading_size               20
 #define airwise_Bmv080Reading_size               17
-#define airwise_Data_size                        181
-#define airwise_Frame_size                       210
+#define airwise_Data_size                        200
+#define airwise_Frame_size                       229
 #define airwise_Hello_size                       24
 #define airwise_Ina3221Power_size                36
+#define airwise_MethaneReading_size              16
 #define airwise_OzoneReading_size                15
 #define airwise_PowerChannel_size                10
 #define airwise_SamplePosition_size              27

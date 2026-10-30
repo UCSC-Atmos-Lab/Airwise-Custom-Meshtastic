@@ -18,6 +18,9 @@ PB_BIND(airwise_Data, airwise_Data, 2)
 PB_BIND(airwise_OzoneReading, airwise_OzoneReading, AUTO)
 
 
+PB_BIND(airwise_MethaneReading, airwise_MethaneReading, AUTO)
+
+
 PB_BIND(airwise_Ack, airwise_Ack, AUTO)
 
 
@@ -40,6 +43,3 @@ PB_BIND(airwise_Bmv080Reading, airwise_Bmv080Reading, AUTO)
 
 
 PB_BIND(airwise_SamplePosition, airwise_SamplePosition, AUTO)
-
-
-
